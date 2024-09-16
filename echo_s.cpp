@@ -28,7 +28,7 @@ int processConnection(int sockFd) {
 
         // Clean the buffer to remove newline characters or unwanted characters
         std::string cleanBuffer(buffer);
-        cleanBuffer.erase(std::remove(cleanBuffer.begin(), cleanBuffer.end(), '\n'), cleanBuffer.end());
+        cleanBuffer.erase(std::remove_if(cleanBuffer.begin(), cleanBuffer.end(), [](char c){ return c == '\n'; }), cleanBuffer.end());
 
         // Debug showing data received
         logDebug("Received " + std::to_string(bytesRead) + " bytes, containing the string \"" + cleanBuffer + "\"", __FILE__, __LINE__);
