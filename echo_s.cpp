@@ -1,5 +1,5 @@
 #include "echo_s.h"
-#include "logging.h" // Include logging.h for log handling
+#include "logging.h" 
 
 // **************************************************************************************
 // * processConnection()
