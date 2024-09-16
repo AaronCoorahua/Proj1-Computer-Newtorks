@@ -18,3 +18,19 @@ To compile the project, simply run:
 
 ```bash
 make
+```
+
+This will generate an executable named echo_s.
+
+## Running the Server:
+
+You can run the server using the following syntax:
+
+```bash
+./echo_s [-d <debug_level>]
+```
+
+## Notes
+
+- The server defaults to port 2024, but if this port is unavailable, it will automatically try the next available port.
+- Ensure that the data block size does not exceed 1024 bytes, as this is the configured limit.
