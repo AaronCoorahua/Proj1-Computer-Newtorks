@@ -1,5 +1,5 @@
 #include "echo_s.h"
-#include "logging.h"
+#include "logging.h" // Include logging.h for log handling
 
 // **************************************************************************************
 // * processConnection()
@@ -13,39 +13,42 @@ int processConnection(int sockFd) {
     char buffer[1024];
 
     while (keepGoing) {
+        // Clear the buffer before each read
         memset(buffer, 0, sizeof(buffer));
 
         // Debug when waiting for new data
-        logDebug("Calling read(" + std::to_string(sockFd) + ", " + std::to_string(reinterpret_cast<uintptr_t>(buffer)) + ", 1024)", __FILE__, __LINE__);
+        logDebug("Calling read", __FILE__, __LINE__);
 
+        // Reading data from the client
         int bytesRead = read(sockFd, buffer, sizeof(buffer) - 1);
         if (bytesRead <= 0) {
             logError("Error reading the socket or connection closed.", __FILE__, __LINE__);
             break;
         }
 
-        // Debug showing data received, removing extra newlines from buffer
-        std::string cleanBuffer = std::string(buffer);
+        // Clean the buffer to remove newline characters or unwanted characters
+        std::string cleanBuffer(buffer);
         cleanBuffer.erase(std::remove(cleanBuffer.begin(), cleanBuffer.end(), '\n'), cleanBuffer.end());
-        logDebug("Received " + std::to_string(bytesRead) + " bytes, containing the string \"" + cleanBuffer + "\".", __FILE__, __LINE__);
 
-        std::string data(buffer);
+        // Debug showing data received
+        logDebug("Received " + std::to_string(bytesRead) + " bytes, containing the string \"" + cleanBuffer + "\"", __FILE__, __LINE__);
 
-        if (data.find("CLOSE") == 0) {
+        // Handling "CLOSE" - "QUIT" commands
+        if (cleanBuffer.find("CLOSE") == 0) {
             logDebug("CLOSE command found.", __FILE__, __LINE__);
-            logDebug("Calling write(" + std::to_string(sockFd) + ", " + std::to_string(reinterpret_cast<uintptr_t>(buffer)) + ", " + std::to_string(bytesRead) + ")", __FILE__, __LINE__);
+            logDebug("Calling write", __FILE__, __LINE__);
             write(sockFd, buffer, bytesRead);
             logDebug("Wrote " + std::to_string(bytesRead) + " back to client.", __FILE__, __LINE__);
             keepGoing = false;
-        } else if (data.find("QUIT") == 0) {
+        } else if (cleanBuffer.find("QUIT") == 0) {
             logDebug("QUIT command found.", __FILE__, __LINE__);
-            logDebug("Calling write(" + std::to_string(sockFd) + ", " + std::to_string(reinterpret_cast<uintptr_t>(buffer)) + ", " + std::to_string(bytesRead) + ")", __FILE__, __LINE__);
+            logDebug("Calling write", __FILE__, __LINE__);
             write(sockFd, buffer, bytesRead);
             logDebug("Wrote " + std::to_string(bytesRead) + " back to client.", __FILE__, __LINE__);
             quitProgram = true;
             keepGoing = false;
         } else {
-            logDebug("Calling write(" + std::to_string(sockFd) + ", " + std::to_string(reinterpret_cast<uintptr_t>(buffer)) + ", " + std::to_string(bytesRead) + ")", __FILE__, __LINE__);
+            logDebug("Calling write", __FILE__, __LINE__);
             write(sockFd, buffer, bytesRead);
             logDebug("Wrote " + std::to_string(bytesRead) + " back to client.", __FILE__, __LINE__);
         }
@@ -61,6 +64,7 @@ int processConnection(int sockFd) {
 
 int main(int argc, char *argv[]) {
 
+    // Process the command line arguments
     int opt = 0;
     while ((opt = getopt(argc, argv, "d:")) != -1) {
         switch (opt) {
@@ -74,21 +78,26 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    logDebug("Calling socket() assigned file descriptor ", __FILE__, __LINE__);
+    // Creating the initial socket
+    logDebug("Calling socket() assigned file descriptor", __FILE__, __LINE__);
     int listenFd = socket(AF_INET, SOCK_STREAM, 0);
     if (listenFd < 0) {
-        logFatal("Error al crear el socket.", __FILE__, __LINE__);
+        logFatal("Error creating the socket.", __FILE__, __LINE__);
         exit(1);
     }
-    logDebug("Socket FD: " + std::to_string(listenFd), __FILE__, __LINE__);
+    logDebug("File descriptor assigned: " + std::to_string(listenFd), __FILE__, __LINE__);
 
+    // Configuring the initial Address and the Port of the server
     struct sockaddr_in servaddr;
     memset(&servaddr, 0, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
     servaddr.sin_addr.s_addr = INADDR_ANY;
+
+    // Selecting port number
     int port = 2024;
     servaddr.sin_port = htons(port);
 
+    // Linking Socket with the Port
     logDebug("Calling bind()...", __FILE__, __LINE__);
     bool bindSuccesful = false;
     while (!bindSuccesful) {
@@ -102,22 +111,24 @@ int main(int argc, char *argv[]) {
     }
     std::cout << "Using port: " << port << std::endl;
 
-    logDebug("CALLING LISTEN()...", __FILE__, __LINE__);
+    // Setting the socket to the listening state
+    logDebug("Calling listen()...", __FILE__, __LINE__);
     if (listen(listenFd, 5) < 0) {
         logFatal("Error setting the socket in listening state.", __FILE__, __LINE__);
         exit(1);
     }
 
+    // Accepting connections
     bool quitProgram = false;
     while (!quitProgram) {
-        logDebug("CALLING ACCEPT(" + std::to_string(listenFd) + "NULL,NULL)", __FILE__, __LINE__);
+        logDebug("Calling accept()", __FILE__, __LINE__);
         int connFd = accept(listenFd, (struct sockaddr*)nullptr, nullptr);
         if (connFd < 0) {
             logError("Error accepting connection.", __FILE__, __LINE__);
             exit(1);
         }
 
-        logInfo("The program received a connection on FD: " + std::to_string(connFd), __FILE__, __LINE__);
+        logInfo("The program received a connection on " + std::to_string(connFd), __FILE__, __LINE__);
 
         quitProgram = processConnection(connFd);
 
@@ -128,4 +139,3 @@ int main(int argc, char *argv[]) {
 
     return 0;
 }
-
