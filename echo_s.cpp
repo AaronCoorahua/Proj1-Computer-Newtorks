@@ -20,7 +20,7 @@ int processConnection(int sockFd) {
         memset(buffer, 0, sizeof(buffer));
 
         // Debugging when waiting for new data   
-        DEBUG std::cerr << "CALLING READ(" << sockFd << "," << static_cast<void*>(buffer) << ",1024) (echo_s.cpp:" << __LINE__ << ")" << ENDL;  
+        DEBUG std::cerr << "CALLING READ(" << sockFd << "," << static_cast<void*>(buffer) << ",1024) (echo_s.cpp:" << __LINE__ << ")" << ENDL;
 
         // Reading data from the client
         int bytesRead = read(sockFd, buffer, sizeof(buffer) - 1);
@@ -32,18 +32,18 @@ int processConnection(int sockFd) {
         // Debugging showing data received
         DEBUG std::cerr << "Received " << bytesRead << " bytes, containing the string \"" << buffer << "\" (echo_s.cpp:" << __LINE__ << ")" << ENDL;
 
-        std::string data(buffer);  
+        std::string data(buffer);
 
         // Handling "CLOSE" - "QUIT" commands
         if (data.find("CLOSE") == 0) {
-            DEBUG std::cerr << "CLOSE command found. (echo_s.cpp:" <<  __LINE__ << ")" << ENDL;
+            DEBUG std::cerr << "CLOSE command found. (echo_s.cpp:" << __LINE__ << ")" << ENDL;
             DEBUG std::cerr << "CALLING WRITE(" << sockFd << "," << static_cast<void*>(buffer) << "," << bytesRead << ") (echo_s.cpp:" << __LINE__ << ")" << ENDL;
             write(sockFd, buffer, bytesRead);
-            DEBUG std::cerr << "Wrote " << bytesRead << " back to client. (echo_s.cpp:" << __LINE__ << ")" << ENDL; 
+            DEBUG std::cerr << "Wrote " << bytesRead << " back to client. (echo_s.cpp:" << __LINE__ << ")" << ENDL;
 
             keepGoing = false;
         } else if (data.find("QUIT") == 0) {
-            DEBUG std::cerr << "QUIT command found. (echo_s.cpp:" <<  __LINE__ << ")" << ENDL;
+            DEBUG std::cerr << "QUIT command found. (echo_s.cpp:" << __LINE__ << ")" << ENDL;
             DEBUG std::cerr << "CALLING WRITE(" << sockFd << "," << static_cast<void*>(buffer) << "," << bytesRead << ") (echo_s.cpp:" << __LINE__ << ")" << ENDL;
             write(sockFd, buffer, bytesRead);
             DEBUG std::cerr << "Wrote " << bytesRead << " back to client. (echo_s.cpp:" << __LINE__ << ")" << ENDL;
@@ -112,7 +112,7 @@ int main (int argc, char *argv[]) {
     DEBUG std::cerr << "Calling bind()... (echo_s.cpp:" << __LINE__ << ")" << ENDL;
     bool bindSuccesful = false;
     while (!bindSuccesful) {
-        if (bind(listenFd, (struct sockaddr*)&servaddr, sizeof(servaddr)) < 0){
+        if (bind(listenFd, (struct sockaddr*)&servaddr, sizeof(servaddr)) < 0) {
             WARNING std::cerr << "Port number " << port << " is not available. Trying another... (echo_s.cpp:" << __LINE__ << ")" << ENDL;
             port++;
             servaddr.sin_port = htons(port);
@@ -120,7 +120,7 @@ int main (int argc, char *argv[]) {
             bindSuccesful = true;
         }
     }
-    std::cout << "Using port: "<< port << std::endl;
+    std::cout << "Using port: " << port << std::endl;
 
     // ********************************************************************
     // * Setting the socket to the listening state.
@@ -136,17 +136,17 @@ int main (int argc, char *argv[]) {
     // ********************************************************************
     bool quitProgram = false;
     while (!quitProgram) {
-        DEBUG std::cerr << "CALLING ACCEPT(" << listenFd << "NULL,NULL). (echo_s.cpp: " << __LINE__ << ")" << ENDL;
+        DEBUG std::cerr << "CALLING ACCEPT(" << listenFd << "NULL,NULL). (echo_s.cpp:" << __LINE__ << ")" << ENDL;
         int connFd = accept(listenFd, (struct sockaddr*)nullptr, nullptr);
         if (connFd < 0) {
-            ERROR std::cerr << "Error accepting connection. (echo_s.cpp: " << __LINE__ << ")" << ENDL;
+            ERROR std::cerr << "Error accepting connection. (echo_s.cpp:" << __LINE__ << ")" << ENDL;
             exit(1);
         }
 
-        INFO std::cerr << "The program received a connection on " << connFd << " (echo_s.cpp: " << __LINE__ << ")" << ENDL;
+        INFO std::cerr << "The program received a connection on " << connFd << " (echo_s.cpp:" << __LINE__ << ")" << ENDL;
 
         quitProgram = processConnection(connFd);
-   
+
         close(connFd);
     }
 
