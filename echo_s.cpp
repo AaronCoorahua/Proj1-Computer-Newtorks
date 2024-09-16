@@ -1,5 +1,5 @@
 #include "echo_s.h"
-#include "logging.h" 
+#include "logging.h" // Include logging.h for log handling
 
 // **************************************************************************************
 // * processConnection()
@@ -17,40 +17,40 @@ int processConnection(int sockFd) {
         memset(buffer, 0, sizeof(buffer));
 
         // Debug when waiting for new data
-        DEBUG std::cerr << "Calling read(" << sockFd << ", " << static_cast<void*>(buffer) << ", 1024)" << ENDL;
+        logDebug("Calling read(" + std::to_string(sockFd) + ", " + std::to_string(reinterpret_cast<uintptr_t>(buffer)) + ", 1024)");
 
         // Reading data from the client
         int bytesRead = read(sockFd, buffer, sizeof(buffer) - 1);
         if (bytesRead <= 0) {
-            ERROR std::cerr << "Error reading the socket or connection closed. (echo_s.cpp:" << __LINE__ << ")" << ENDL;
+            logError("Error reading the socket or connection closed.");
             break;
         }
 
         // Debug showing data received
-        DEBUG std::cerr << "Received " << bytesRead << " bytes, containing the string\n\"" << std::string(buffer) << "\". (echo_s.cpp:" << __LINE__ << ")" << ENDL;
+        logDebug("Received " + std::to_string(bytesRead) + " bytes, containing the string\n\"" + std::string(buffer) + "\".");
 
         std::string data(buffer);
 
         // Handling "CLOSE" - "QUIT" commands
         if (data.find("CLOSE") == 0) {
-            DEBUG std::cerr << "CLOSE command found. (echo_s.cpp:" << __LINE__ << ")" << ENDL;
-            DEBUG std::cerr << "Calling write(" << sockFd << ", " << static_cast<void*>(buffer) << ", " << bytesRead << ")" << ENDL;
+            logDebug("CLOSE command found.");
+            logDebug("Calling write(" + std::to_string(sockFd) + ", " + std::to_string(reinterpret_cast<uintptr_t>(buffer)) + ", " + std::to_string(bytesRead) + ")");
             write(sockFd, buffer, bytesRead);
-            DEBUG std::cerr << "Wrote " << bytesRead << " back to client. (echo_s.cpp:" << __LINE__ << ")" << ENDL;
+            logDebug("Wrote " + std::to_string(bytesRead) + " back to client.");
 
             keepGoing = false;
         } else if (data.find("QUIT") == 0) {
-            DEBUG std::cerr << "QUIT command found. (echo_s.cpp:" << __LINE__ << ")" << ENDL;
-            DEBUG std::cerr << "Calling write(" << sockFd << ", " << static_cast<void*>(buffer) << ", " << bytesRead << ")" << ENDL;
+            logDebug("QUIT command found.");
+            logDebug("Calling write(" + std::to_string(sockFd) + ", " + std::to_string(reinterpret_cast<uintptr_t>(buffer)) + ", " + std::to_string(bytesRead) + ")");
             write(sockFd, buffer, bytesRead);
-            DEBUG std::cerr << "Wrote " << bytesRead << " back to client. (echo_s.cpp:" << __LINE__ << ")" << ENDL;
+            logDebug("Wrote " + std::to_string(bytesRead) + " back to client.");
 
             quitProgram = true;
             keepGoing = false;
         } else {
-            DEBUG std::cerr << "Calling write(" << sockFd << ", " << static_cast<void*>(buffer) << ", " << bytesRead << ")" << ENDL;
+            logDebug("Calling write(" + std::to_string(sockFd) + ", " + std::to_string(reinterpret_cast<uintptr_t>(buffer)) + ", " + std::to_string(bytesRead) + ")");
             write(sockFd, buffer, bytesRead);
-            DEBUG std::cerr << "Wrote " << bytesRead << " back to client. (echo_s.cpp:" << __LINE__ << ")" << ENDL;
+            logDebug("Wrote " + std::to_string(bytesRead) + " back to client.");
         }
     }
 
@@ -62,7 +62,7 @@ int processConnection(int sockFd) {
 // * - Sets up the sockets and accepts new connection until processConnection() returns 1
 // **************************************************************************************
 
-int main (int argc, char *argv[]) {
+int main(int argc, char *argv[]) {
 
     // ********************************************************************
     // * Process the command line arguments
@@ -72,7 +72,7 @@ int main (int argc, char *argv[]) {
         switch (opt) {
             case 'd':
                 LOG_LEVEL = std::stoi(optarg);
-                INFO std::cerr << "LOG level established at: " << LOG_LEVEL << ENDL;
+                logInfo("LOG level established at: " + std::to_string(LOG_LEVEL));
                 break;
             default:
                 std::cout << "usage: " << argv[0] << " -d <num>" << std::endl;
@@ -83,13 +83,13 @@ int main (int argc, char *argv[]) {
     // *******************************************************************
     // * Creating the initial socket.
     // ********************************************************************
-    DEBUG std::cerr << "Calling socket() assigned file descriptor ";
+    logDebug("Calling socket() assigned file descriptor ");
     int listenFd = socket(AF_INET, SOCK_STREAM, 0);
     if (listenFd < 0) {
-        FATAL std::cerr << "Error al crear el socket. (echo_s.cpp: " << __LINE__ << ")" << ENDL;
+        logFatal("Error al crear el socket.");
         exit(1);
     }
-    DEBUG std::cerr << listenFd << " (echo_s.cpp:" << __LINE__ << ")" << ENDL;
+    logDebug("Socket FD: " + std::to_string(listenFd));
 
     // *******************************************************************
     // * Configuring the initial Address and the Port of the server.
@@ -106,11 +106,11 @@ int main (int argc, char *argv[]) {
     // ********************************************************************
     // * Linking Socket with the Port.
     // ********************************************************************
-    DEBUG std::cerr << "Calling bind()... (echo_s.cpp:" << __LINE__ << ")" << ENDL;
+    logDebug("Calling bind()...");
     bool bindSuccesful = false;
     while (!bindSuccesful) {
         if (bind(listenFd, (struct sockaddr*)&servaddr, sizeof(servaddr)) < 0) {
-            WARNING std::cerr << "Port number " << port << " is not available. Trying another... (echo_s.cpp:" << __LINE__ << ")" << ENDL;
+            logWarning("Port number " + std::to_string(port) + " is not available. Trying another...");
             port++;
             servaddr.sin_port = htons(port);
         } else {
@@ -122,9 +122,9 @@ int main (int argc, char *argv[]) {
     // ********************************************************************
     // * Setting the socket to the listening state.
     // ********************************************************************
-    DEBUG std::cerr << "CALLING LISTEN()... (echo_s.cpp:" << __LINE__ << ")" << ENDL;
+    logDebug("CALLING LISTEN()...");
     if (listen(listenFd, 5) < 0) {
-        FATAL std::cerr << "Error setting the socket in listening state. (echo_s.cpp:" << __LINE__ << ")" << ENDL;
+        logFatal("Error setting the socket in listening state.");
         exit(1);
     }
 
@@ -133,14 +133,14 @@ int main (int argc, char *argv[]) {
     // ********************************************************************
     bool quitProgram = false;
     while (!quitProgram) {
-        DEBUG std::cerr << "CALLING ACCEPT(" << listenFd << "NULL,NULL). (echo_s.cpp:" << __LINE__ << ")" << ENDL;
+        logDebug("CALLING ACCEPT(" + std::to_string(listenFd) + "NULL,NULL)");
         int connFd = accept(listenFd, (struct sockaddr*)nullptr, nullptr);
         if (connFd < 0) {
-            ERROR std::cerr << "Error accepting connection. (echo_s.cpp:" << __LINE__ << ")" << ENDL;
+            logError("Error accepting connection.");
             exit(1);
         }
 
-        INFO std::cerr << "The program received a connection on " << connFd << " (echo_s.cpp:" << __LINE__ << ")" << ENDL;
+        logInfo("The program received a connection on FD: " + std::to_string(connFd));
 
         quitProgram = processConnection(connFd);
 
